@@ -4,14 +4,15 @@ Main for Gaussian Process Regression. Inpired by: https://juanitorduz.github.io/
 from typing import Tuple
 from argparse import ArgumentParser
 
+import json
 import numpy as np
 import pandas as pd
 import time
 from sklearn.gaussian_process.kernels import *
 from sklearn.gaussian_process import GaussianProcessRegressor
 
-from hms.optimization import optimize_with_hms
-from utils import create_experiment_dir, load_data, get_kernel
+from hms.optimization import hms_optimization
+from utils import *
 from plotting import *
 
 
@@ -22,7 +23,8 @@ def predict(
     y_train: np.ndarray,
     x_test: np.ndarray,
     y_test: np.ndarray,
-    results_dir: str
+    results_dir: str,
+    verbose: bool = False
 ) -> Tuple:
     
     # Predict
@@ -45,7 +47,8 @@ def predict(
         df=df,
         n_train=x_train.shape[0],
         r2_score_test=r2_score_test,
-        results_dir=results_dir
+        results_dir=results_dir,
+        verbose=verbose
     )    
 
     # Plot the errors
@@ -53,7 +56,8 @@ def predict(
         gpr=gpr,
         x_test=x_test,
         y_test=y_test,
-        results_dir=results_dir
+        results_dir=results_dir,
+        verbose=verbose
     )
     
     return df, r2_score_train, r2_score_test
@@ -106,8 +110,17 @@ def gpr(
     if optimizer == "sklearn":
         gpr.fit(x_train, y_train)
     elif optimizer == "hms":
-        gpr = optimize_with_hms(gpr, x_train, y_train)
+        gpr = hms_optimization(gpr, x_train, y_train)
+    elif optimizer == "fixed":
+        gpr.kernel = fix_kernel(gpr.kernel)
+        gpr.fit(x_train, y_train)
     print(f"[info] Fitting the model took {time.time() - start_time:.2f} seconds")
+
+    # Save the fitted kernel
+    with open(os.path.join(results_dir, 'kernel_fitted.py'), 'w') as f:
+        fixed_kernel = fix_kernel(gpr.kernel_)
+        f.write(f"from sklearn.gaussian_process.kernels import *\n\n")
+        f.write(f"kernel = {fixed_kernel.__repr__()}")
     
     # Plot samples from posterior
     if verbose:
@@ -129,7 +142,8 @@ def gpr(
         y_train=y_train,
         x_test=x_test,
         y_test=y_test,
-        results_dir=results_dir
+        results_dir=results_dir,
+        verbose=verbose
     )
     print(f"[info] Train R2 score: {r2_score_train:.3f}")
     print(f"[info] Test R2 score:  {r2_score_test:.3f}")
@@ -145,7 +159,7 @@ if __name__ == '__main__':
                         help="Path to the data file time series")
     parser.add_argument("--split", type=float, default=0.8,
                         help="Train-test split ratio")
-    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms"],
+    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms", "fixed"],
                         help="Optimization method to use for the kernel hyperparameters optimization")
     parser.add_argument("--column", type=str, default="Close",
                         help="Dataframe column to use for the time series prediction")

@@ -5,7 +5,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
 
 
-def optimize_with_hms(
+def hms_optimization(
     gpr: GaussianProcessRegressor,
     x_train: np.ndarray,
     y_train: np.ndarray,
@@ -13,10 +13,11 @@ def optimize_with_hms(
 ):
     """
     TODO This is a mock version of the function. The function should:
-    1. Optimize the kernel parameters with the HMS algorithm. The optimisation metric is the `metric_fn`
-    2. define the sklearn kernel with fixed bounds, to prevent kernel parameters from changing
-    3. Fit the model with the new kernel (fitting only to data, without kernel hyperparameters tuning - becouse we fixed them)
-    4. Return the GaussianProcessRegressor object with the new, optimized kernel
+    1. Extract hyperparameters and bounds from the kernel
+    2. Optimize the kernel parameters with the HMS algorithm. The optimisation metric is the `metric_fn`
+    3. Define the sklearn kernel with optimized hyperparameters and fixed bounds, to prevent kernel parameters from changing
+    4. Fit the GPR model with the new fixed kernel to training data (fitting only to data, without kernel hyperparameters tuning - becouse we fixed them)
+    5. Return the GaussianProcessRegressor object with the new, optimized kernel
     """
 
     suggested_kernel = gpr.kernel_

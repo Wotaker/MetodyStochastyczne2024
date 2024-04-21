@@ -70,3 +70,12 @@ def get_kernel(kernel_path: str) -> Kernel:
 
     return kernel
 
+
+def fix_kernel(kernel: Kernel) -> Kernel:
+    kernel_params_dict = kernel.get_params()
+    bounds_keys = [key for key in kernel_params_dict.keys() if 'bounds' in key]
+    for key in bounds_keys:
+        kernel_params_dict[key] = "fixed"
+    kernel.set_params(**kernel_params_dict)
+    return kernel
+

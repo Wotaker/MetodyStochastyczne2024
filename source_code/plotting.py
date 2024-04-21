@@ -44,7 +44,8 @@ def plot_predictions(
     df: pd.DataFrame,
     n_train: int,
     r2_score_test: float,
-    results_dir: str
+    results_dir: str,
+    verbose: bool = False
 ):
     # Plot the predictions
     fig, ax = plt.subplots()
@@ -54,21 +55,26 @@ def plot_predictions(
         y2=df['y_upr'], 
         color=sns_c[2], 
         alpha=0.15, 
-        label='+- 2*std'
+        label='$\mu \pm 2\sigma$'
     )
     sns.lineplot(x='time', y='CO2', data=df, color=sns_c[0], label = 'y_true', ax=ax)
     sns.lineplot(x='time', y='y_mean', data=df, color=sns_c[2], label='y_hat_mean', ax=ax)
     ax.axvline(n_train, color=sns_c[3], linestyle='--', label='train-test split')
     ax.legend()
     ax.set(title=f'Test R2 score: {r2_score_test:.3f}', xlabel='t', ylabel='');
+
+    # Save figur and show
     plt.savefig(os.path.join(results_dir, 'predictions.pdf'), bbox_inches='tight')
+    if verbose:
+        plt.show()
 
 
 def plot_errors(
     gpr: GaussianProcessRegressor,
     x_test: np.ndarray,
     y_test: np.ndarray,
-    results_dir: str
+    results_dir: str,
+    verbose: bool = False
 ):
     # Calculate prediction errors
     errors = gpr.predict(x_test) - np.squeeze(y_test)
@@ -87,6 +93,10 @@ def plot_errors(
     ax[1].axvline(x=errors_mean, color=sns_c[3], linestyle='--')
     ax[0].legend()
     ax[1].legend()
-    ax[0].set(title='Test vs Predictions (Test Set)', xlabel='y_test', ylabel='y_pred');
+    ax[0].set(title='Gold vs Predictions (Test Set)', xlabel='y_test', ylabel='y_pred');
     ax[1].set(title='Errors', xlabel='error', ylabel=None);
+
+    # Save figur and show
     plt.savefig(os.path.join(results_dir, 'errors.pdf'), bbox_inches='tight')
+    if verbose:
+        plt.show()
