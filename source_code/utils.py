@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import importlib.util
 from datetime import datetime
 from sklearn.gaussian_process.kernels import Kernel
+from sklearn.gaussian_process import GaussianProcessRegressor
 
 
 def create_experiment_dir(dir_path: str, kernel_path: str) -> str:
@@ -79,3 +80,16 @@ def fix_kernel(kernel: Kernel) -> Kernel:
     kernel.set_params(**kernel_params_dict)
     return kernel
 
+
+def parse_parameters(gpr: GaussianProcessRegressor) -> list[tuple[int, tuple]]:
+    """
+    Returns a list of kernel parameters with their bounds. The names of parameters are accepted by the
+    kernel.setparams(**{name:value}) method.
+    """
+
+    hyperparameters = gpr.kernel.hyperparameters
+    kernel_parameters = []
+    for hparameter in hyperparameters:
+        kernel_parameters.append((hparameter.name, tuple(*hparameter.bounds)))
+
+    return kernel_parameters
