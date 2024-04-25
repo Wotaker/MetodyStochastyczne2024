@@ -9,7 +9,7 @@ def hms_optimization(
     gpr: GaussianProcessRegressor,
     x_train: np.ndarray,
     y_train: np.ndarray,
-    metric_fn: Callable
+    metric_fn: Callable = None
 ):
     """
     TODO This is a mock version of the function. The function should:
@@ -20,7 +20,7 @@ def hms_optimization(
     5. Return the GaussianProcessRegressor object with the new, optimized kernel
     """
 
-    suggested_kernel = gpr.kernel_
+    suggested_kernel = gpr.kernel
 
     # TODO Optimize the kernel hyperparameters with the HMS algorithm
 
@@ -38,10 +38,10 @@ def hms_optimization(
     k2 = ConstantKernel(constant_value=1, constant_value_bounds=fixed) * \
     ExpSineSquared(length_scale=1.0, periodicity=10, length_scale_bounds=fixed, periodicity_bounds=fixed)
 
-    optimized_kernel  = k0 + k1 + k2
+    optimized_kernel = k0 + k1 + k2
 
     # Fit the model with the new kernel
-    gpr.kernel_ = optimized_kernel
-    gpr.fit(x_train, y_train)
+    gpr.kernel = optimized_kernel
+    # gpr.fit(x_train, y_train)
 
     return gpr

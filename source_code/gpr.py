@@ -118,7 +118,7 @@ def gpr(
 
     # Save the fitted kernel
     with open(os.path.join(results_dir, 'kernel_fitted.py'), 'w') as f:
-        fixed_kernel = fix_kernel(gpr.kernel_)
+        fixed_kernel = fix_kernel(gpr.kernel)
         f.write(f"from sklearn.gaussian_process.kernels import *\n\n")
         f.write(f"kernel = {fixed_kernel.__repr__()}")
     
