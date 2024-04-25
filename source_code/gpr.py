@@ -11,6 +11,8 @@ import time
 from sklearn.gaussian_process.kernels import *
 from sklearn.gaussian_process import GaussianProcessRegressor
 
+from sklearn.metrics import mean_squared_error
+
 from hms.optimization import hms_optimization
 from utils import *
 from plotting import *
@@ -110,7 +112,7 @@ def gpr(
     if optimizer == "sklearn":
         gpr.fit(x_train, y_train)
     elif optimizer == "hms":
-        gpr = hms_optimization(gpr, x_train, y_train)
+        gpr = hms_optimization(gpr, x_train, y_train, mean_squared_error)
     elif optimizer == "fixed":
         gpr.kernel = fix_kernel(gpr.kernel)
         gpr.fit(x_train, y_train)
