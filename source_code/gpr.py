@@ -14,6 +14,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.metrics import mean_squared_error
 
 from hms.optimization import hms_optimization
+from load.optimization import mock_optimization
 from utils import *
 from plotting import *
 
@@ -116,6 +117,8 @@ def gpr(
     elif optimizer == "fixed":
         gpr.kernel = fix_kernel(gpr.kernel)
         gpr.fit(x_train, y_train)
+    elif optimizer == "mock":
+        gpr = mock_optimization(gpr, x_train, y_train)
     print(f"[info] Fitting the model took {time.time() - start_time:.2f} seconds")
 
     # Save the fitted kernel
@@ -161,7 +164,7 @@ if __name__ == '__main__':
                         help="Path to the data file time series")
     parser.add_argument("--split", type=float, default=0.8,
                         help="Train-test split ratio")
-    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms", "fixed"],
+    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms", "fixed", "mock"],
                         help="Optimization method to use for the kernel hyperparameters optimization")
     parser.add_argument("--column", type=str, default="Close",
                         help="Dataframe column to use for the time series prediction")

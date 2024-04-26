@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 import os
 import numpy as np
@@ -81,15 +81,27 @@ def fix_kernel(kernel: Kernel) -> Kernel:
     return kernel
 
 
-def parse_parameters(gpr: GaussianProcessRegressor) -> list[tuple[int, tuple]]:
+def parse_parameters(gpr: GaussianProcessRegressor) -> List[Tuple]:
     """
-    Returns a list of kernel parameters with their bounds. The names of parameters are accepted by the
+    Returns a list of kernel parameters with their values and bounds. The names of parameters are accepted by the
     kernel.setparams(**{name:value}) method.
     """
 
     hyperparameters = gpr.kernel.hyperparameters
+    theta = gpr.kernel.theta
     kernel_parameters = []
-    for hparameter in hyperparameters:
-        kernel_parameters.append((hparameter.name, tuple(*hparameter.bounds)))
+    for h, v in zip(hyperparameters, theta):
+        kernel_parameters.append((h.name, np.exp(v), tuple(*h.bounds)))
 
     return kernel_parameters
+
+def set_parameters(gpr: GaussianProcessRegressor, kernel_parameters: List[Tuple], fixed: bool = True) -> GaussianProcessRegressor:
+    """
+    Sets the kernel parameters of a GaussianProcessRegressor object.
+    """
+
+    kernel = gpr.kernel
+    kernel.set_params(**{kernel_parameters[i][0]: kernel_parameters[i][1] for i in range(len(kernel_parameters))})
+    gpr.kernel = fix_kernel(kernel) if fixed else kernel
+
+    return gpr
