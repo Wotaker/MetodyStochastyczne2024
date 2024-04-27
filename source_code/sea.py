@@ -8,7 +8,7 @@ import os
 from utils import fix_kernel
 
 def evaluate_model(kernel_params, X_train, y_train, X_test, y_test):
-    k0 = WhiteKernel(noise_level=kernel_params[0]**2, noise_level_bounds=(0.1**2, 0.5**2))
+    k0 = WhiteKernel(noise_level=kernel_params[0], noise_level_bounds=(0.01, 0.25))
     k1 = ConstantKernel(constant_value=kernel_params[1], constant_value_bounds=(1, 500)) * \
          RBF(length_scale=kernel_params[2], length_scale_bounds=(1, 1e4))
     k2 = ConstantKernel(constant_value=1) * \
@@ -20,6 +20,16 @@ def evaluate_model(kernel_params, X_train, y_train, X_test, y_test):
     predictions = model.predict(X_test)
     mse = mean_squared_error(y_test, predictions)
     return mse
+
+def initialize_population(population_size):
+    population = []
+    for _ in range(population_size):
+        noise_level = np.random.uniform(0.01, 0.25)
+        constant_value = np.random.uniform(1, 500)
+        length_scale = np.random.uniform(1, 1e4)
+        periodicity = np.random.uniform(8, 15)
+        population.append([noise_level, constant_value, length_scale, periodicity])       
+    return population
 
 def mutate(kernel_params, mutation_rate):
     if random.random() < mutation_rate:
@@ -38,7 +48,7 @@ def tournament_selection(population, scores, tournament_size):
 
 
 def genetic_algorithm(X_train, y_train, X_test, y_test, population_size, n_generations, mutation_rate, tournament_size):
-    population = [np.random.rand(4) for _ in range(population_size)]
+    population = initialize_population(population_size)
     best_score = float('inf')
     best_params = None
     
