@@ -70,6 +70,12 @@ def genetic_algorithm(x_train, y_train, x_test, y_test, population_size, n_gener
             child2 = mutate(crossover(parent1, parent2), mutation_rate)
             new_population.extend([child1, child2])
         population = new_population
+        # choose best individuals to new population (takes too long)
+        # new_scores = [evaluate_model(ind, x_train, y_train, x_test, y_test) for ind in new_population]
+        # combined_population = population + new_population
+        # combined_scores = scores + new_scores
+        # sorted_indices = sorted(range(len(combined_scores)), key=lambda idx: combined_scores[idx])
+        # population = [combined_population[idx] for idx in sorted_indices[:population_size]]
     return best_params, best_score
 
 
