@@ -10,23 +10,25 @@ import pandas as pd
 import time
 from sklearn.gaussian_process.kernels import *
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
 
-from hms.optimization import hms_optimization
+from hms.optimization2 import hms_optimization
+from sea.optimization import sea_optimization
 from utils import *
 from plotting import *
 
 
 def predict(
-    gpr: GaussianProcessRegressor,
-    df: pd.DataFrame,
-    x_train: np.ndarray,
-    y_train: np.ndarray,
-    x_test: np.ndarray,
-    y_test: np.ndarray,
-    results_dir: str,
-    verbose: bool = False
+        gpr: GaussianProcessRegressor,
+        df: pd.DataFrame,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        x_test: np.ndarray,
+        y_test: np.ndarray,
+        results_dir: str,
+        verbose: bool = False
 ) -> Tuple:
-    
     # Predict
     x = np.concatenate([x_train, x_test])
     y_mean, y_std = gpr.predict(x, return_std=True)
@@ -39,8 +41,8 @@ def predict(
     df['time'] = df.index
     df['y_mean'] = y_mean
     df['y_std'] = y_std
-    df['y_lwr'] = df['y_mean'] - 2*df['y_std']
-    df['y_upr'] = df['y_mean'] + 2*df['y_std']
+    df['y_lwr'] = df['y_mean'] - 2 * df['y_std']
+    df['y_upr'] = df['y_mean'] + 2 * df['y_std']
 
     # Plot the predictions
     plot_predictions(
@@ -49,7 +51,7 @@ def predict(
         r2_score_test=r2_score_test,
         results_dir=results_dir,
         verbose=verbose
-    )    
+    )
 
     # Plot the errors
     plot_errors(
@@ -59,19 +61,19 @@ def predict(
         results_dir=results_dir,
         verbose=verbose
     )
-    
+
     return df, r2_score_train, r2_score_test
 
-def gpr(
-    data_path: str,
-    column: str,
-    split: float,
-    kernel_path: str,
-    optimizer: str,
-    results_dir: str,
-    verbose: bool = False
-):
 
+def gpr(
+        data_path: str,
+        column: str,
+        split: float,
+        kernel_path: str,
+        optimizer: str,
+        results_dir: str,
+        verbose: bool = False
+):
     # Load data
     df, x_train, x_test, y_train, y_test, mean, std = load_data(
         data_path=data_path,
@@ -85,8 +87,8 @@ def gpr(
 
     # Define GaussianProcessRegressor object. 
     gpr = GaussianProcessRegressor(
-        kernel=kernel, 
-        n_restarts_optimizer=10, 
+        kernel=kernel,
+        n_restarts_optimizer=10,
         normalize_y=True,
         alpha=0.0,
     )
@@ -109,8 +111,13 @@ def gpr(
     start_time = time.time()
     if optimizer == "sklearn":
         gpr.fit(x_train, y_train)
+    # elif optimizer == "hms":
+    #     gpr = hms_optimization(gpr, x_train, y_train)
     elif optimizer == "hms":
-        gpr = hms_optimization(gpr, x_train, y_train)
+        gpr = hms_optimization(x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
+    elif optimizer == "sea":
+        gpr = sea_optimization(x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
+
     elif optimizer == "fixed":
         gpr.kernel = fix_kernel(gpr.kernel)
         gpr.fit(x_train, y_train)
@@ -121,7 +128,7 @@ def gpr(
         fixed_kernel = fix_kernel(gpr.kernel_)
         f.write(f"from sklearn.gaussian_process.kernels import *\n\n")
         f.write(f"kernel = {fixed_kernel.__repr__()}")
-    
+
     # Plot samples from posterior
     if verbose:
         plot_samples(
@@ -150,7 +157,6 @@ def gpr(
 
 
 if __name__ == '__main__':
-
     # Parse command line arguments
     parser = ArgumentParser()
     parser.add_argument("-k", "--kernel_path", type=str, required=True,
@@ -159,7 +165,7 @@ if __name__ == '__main__':
                         help="Path to the data file time series")
     parser.add_argument("--split", type=float, default=0.8,
                         help="Train-test split ratio")
-    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms", "fixed"],
+    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms", "sea", "fixed"],
                         help="Optimization method to use for the kernel hyperparameters optimization")
     parser.add_argument("--column", type=str, default="Close",
                         help="Dataframe column to use for the time series prediction")
