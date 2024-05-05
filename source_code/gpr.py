@@ -13,8 +13,8 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 
-from hms.optimization2 import hms_optimization
 from hms.optimization import hms_optimization
+# from hms.optimization_JB import hms_optimization
 from load.optimization import mock_optimization
 from sea.optimization import sea_optimization
 from utils import *
@@ -76,7 +76,6 @@ def gpr(
         results_dir: str,
         verbose: bool = False
 ):
-
     # Load data
     df, x_train, x_test, y_train, y_test, mean, std = load_data(
         data_path=data_path,
@@ -120,7 +119,6 @@ def gpr(
         gpr = hms_optimization(x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
     elif optimizer == "sea":
         gpr = sea_optimization(x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
-
     elif optimizer == "fixed":
         gpr.kernel = fix_kernel(gpr.kernel)
         gpr.fit(x_train, y_train)
@@ -133,7 +131,7 @@ def gpr(
         fixed_kernel = fix_kernel(gpr.kernel_)
         f.write(f"from sklearn.gaussian_process.kernels import *\n\n")
         f.write(f"kernel = {fixed_kernel.__repr__()}")
-    
+
     # Plot samples from posterior
     if verbose:
         plot_samples(
@@ -162,7 +160,6 @@ def gpr(
 
 
 if __name__ == '__main__':
-
     # Parse command line arguments
     parser = ArgumentParser()
     parser.add_argument("-k", "--kernel_path", type=str, required=True,
@@ -171,7 +168,8 @@ if __name__ == '__main__':
                         help="Path to the data file time series")
     parser.add_argument("--split", type=float, default=0.8,
                         help="Train-test split ratio")
-    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms", "sea", "fixed", "mock"],
+    parser.add_argument("-o", "--optimizer", type=str, default="sklearn",
+                        choices=["sklearn", "hms", "sea", "fixed", "mock"],
                         help="Optimization method to use for the kernel hyperparameters optimization")
     parser.add_argument("--column", type=str, default="Close",
                         help="Dataframe column to use for the time series prediction")
