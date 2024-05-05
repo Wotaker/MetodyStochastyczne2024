@@ -1,36 +1,54 @@
 from typing import Callable
+
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
-from pyhms import hms, EALevelConfig, Problem, DontStop, MetaepochLimit, SEA, get_NBC_sprout
-from sklearn.metrics import r2_score
-from utils import fix_kernel, parse_parameters
+from ..utils import parse_parameters, fix_kernel
+
+from pyhms import minimize
 
 
-def create_kernel(noise_level, constant_value, length_scale, periodicity, bounds='fixed'):
-    k0 = WhiteKernel(noise_level ** 2, noise_level_bounds=bounds)
-    k1 = ConstantKernel(constant_value, constant_value_bounds=bounds) * \
-         RBF(length_scale, length_scale_bounds=bounds)
-    k2 = ConstantKernel(constant_value=1, constant_value_bounds=bounds) * \
-         ExpSineSquared(length_scale=1.0, periodicity=periodicity, length_scale_bounds=bounds,
-                        periodicity_bounds=bounds)
-    return fix_kernel(k0 + k1 + k2)
+def hms_optimization(
+    gpr: GaussianProcessRegressor,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    metric_fn: Callable
+):
+    """
+    TODO This is a mock version of the function. The function should:
+    # 1. Extract hyperparameters and bounds from the kernel
+    # 2. Optimize the kernel parameters with the HMS algorithm. The optimisation metric is the `metric_fn`
+    # 3. Define the sklearn kernel with optimized hyperparameters and fixed bounds, to prevent kernel parameters from changing
+    # 4. Fit the GPR model with the new fixed kernel to training data (fitting only to data, without kernel hyperparameters tuning - becouse we fixed them)
+    5. Return the GaussianProcessRegressor object with the new, optimized kernel
+    """
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn)
+
+    solution = minimize(
+        fun=gpr_evaluation.evaluate_model,
+        bounds=gpr_evaluation.get_bounds(),
+        maxfun=10000,
+        log_level="debug"
+    )
+
+    # TODO Define the new kernel with fixed bounds
+
+    return gpr
 
 
-class GPRProblem(Problem):
-    def __init__(self, gpr: GaussianProcessRegressor, x_train, y_train, bounds, metric_fn):
+class GPREvaluation:
+    # TODO move this class to a separate file
+    def __init__(self, gpr: GaussianProcessRegressor, x_train, y_train, metric_fn: Callable):
         self.gpr = gpr
         self.x_train = x_train
         self.y_train = y_train
-        self._bounds = np.array(bounds)
-        self._maximize = True
         self.metric_fn = metric_fn
         self.params = parse_parameters(gpr)
 
         self.gpr.kernel = fix_kernel(self.gpr.kernel)
 
-    def evaluate(self, params):
-        return self.evaluate_model(params)
+    def get_bounds(self):
+        return np.array([bounds for name, bounds in self.params])
 
     def evaluate_model(self, params):
         parameters = {}
@@ -43,39 +61,3 @@ class GPRProblem(Problem):
         metric = self.metric_fn(self.y_train, y_pred)
 
         return metric
-
-    def worse_than(self, current, candidate):
-        return candidate > current
-
-    @property
-    def bounds(self):
-        return self._bounds
-
-    @property
-    def maximize(self):
-        return self._maximize
-
-
-def hms_optimization(gpr, x_train, y_train, metric_fn=r2_score):
-    initial_bounds = [(0.01, 0.25), (1, 500), (1, 1e4), (8, 15)]
-
-    gpr_problem = GPRProblem(gpr, x_train, y_train, initial_bounds, metric_fn)
-
-    config = [
-        EALevelConfig(ea_class=SEA, generations=2, problem=gpr_problem, pop_size=20, mutation_std=1.0, lsc=DontStop()),
-        EALevelConfig(ea_class=SEA, generations=4, problem=gpr_problem, pop_size=10, mutation_std=0.25,
-                      sample_std_dev=1.0, lsc=DontStop()),
-    ]
-    global_stop_condition = MetaepochLimit(limit=10)
-    sprout_condition = get_NBC_sprout(level_limit=4)
-    hms_tree = hms(config, global_stop_condition, sprout_condition)
-
-    best_individual = hms_tree.best_individual
-    param_values = best_individual.genome
-
-    optimized_kernel = create_kernel(*param_values)
-
-    gpr.kernel_ = optimized_kernel
-    gpr.fit(x_train, y_train)
-
-    return gpr
