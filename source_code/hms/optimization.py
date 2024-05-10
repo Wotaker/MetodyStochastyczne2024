@@ -13,10 +13,10 @@ def hms_optimization(
     x_train: np.ndarray,
     y_train: np.ndarray,
     metric_fn: Callable,
-    maximize_metric=True
+    maximize_metric
 ):
 
-    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn, maximize_metric)
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, metric_fn, maximize_metric)
 
     problem = FunctionProblem(gpr_evaluation.evaluate_model,
                               bounds=gpr_evaluation.get_bounds(),

@@ -27,6 +27,17 @@ def create_experiment_dir(dir_path: str, kernel_path: str) -> str:
     return dir_path
 
 
+def train_test_split(x, y, train_size: float):
+    n = len(x)
+    n_train = int(n * train_size)
+
+    x_train = x[:n_train]
+    x_test = x[n_train:]
+    y_train = y[:n_train]
+    y_test = y[n_train:]
+    return x_train, x_test, y_train, y_test
+
+
 def load_data(data_path: str, column: str, split: float = 0.8, verbose: bool = False) -> Tuple:
 
     # Load the data
@@ -36,17 +47,12 @@ def load_data(data_path: str, column: str, split: float = 0.8, verbose: bool = F
 
     # Create training and testing sets
     n = len(df)
-    n_train = int(n * split)
 
     # Convert data to numpy arrays
     x = df.index.values.reshape(-1, 1)
     y = df[column].values.reshape(n, 1)
 
-    # Split data into training and test sets
-    x_train = x[:n_train]
-    x_test = x[n_train:]
-    y_train = y[:n_train]
-    y_test = y[n_train:]
+    x_train, x_test, y_train, y_test = train_test_split(x, y, split)
 
     if verbose:
         plt.scatter(x_train, y_train, c='r', s=1., label='Train')

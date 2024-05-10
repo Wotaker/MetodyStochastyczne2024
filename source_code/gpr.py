@@ -115,9 +115,9 @@ def gpr(
     if optimizer == "sklearn":
         gpr.fit(x_train, y_train)
     elif optimizer == "hms":
-        gpr = hms_optimization(gpr, x_train, y_train, r2_score)
+        gpr = hms_optimization(gpr, x_train, y_train, r2_score, maximize_metric=True)
     elif optimizer == "sea":
-        gpr = sea_optimization(x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
+        gpr = sea_optimization(gpr, x_train, y_train, mean_squared_error, maximize_metric=False)
     elif optimizer == "fixed":
         gpr.kernel = fix_kernel(gpr.kernel)
         gpr.fit(x_train, y_train)

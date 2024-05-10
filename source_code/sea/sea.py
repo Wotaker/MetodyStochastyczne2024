@@ -1,90 +1,67 @@
-import numpy as np
-import pandas as pd
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import *
-from sklearn.metrics import mean_squared_error
 import random
-import os
-from utils import *
-
-def evaluate_model(kernel_params, x_train, y_train, x_test, y_test):
-    k0 = WhiteKernel(noise_level=kernel_params[0], noise_level_bounds=(0.01, 0.25))
-    k1 = ConstantKernel(constant_value=kernel_params[1], constant_value_bounds=(1, 500)) * \
-         RBF(length_scale=kernel_params[2], length_scale_bounds=(1, 1e4))
-    k2 = ConstantKernel(constant_value=1) * \
-         ExpSineSquared(length_scale=1.0, periodicity=kernel_params[3], periodicity_bounds=(8, 15))
-    kernel = k0 + k1 + k2
-    kernel = fix_kernel(kernel)
-    model = GaussianProcessRegressor(kernel=kernel, random_state=0)
-    model.fit(x_train, y_train)
-    predictions = model.predict(x_test)
-    mse = mean_squared_error(y_test, predictions)
-    return mse
-
-def initialize_population(population_size):
-    population = []
-    for _ in range(population_size):
-        noise_level = np.random.uniform(0.01, 0.25)
-        constant_value = np.random.uniform(1, 500)
-        length_scale = np.random.uniform(1, 1e4)
-        periodicity = np.random.uniform(8, 15)
-        population.append([noise_level, constant_value, length_scale, periodicity])       
-    return population
-
-def mutate(kernel_params, mutation_rate):
-    if random.random() < mutation_rate:
-        param_index = random.randint(0, len(kernel_params) - 1)
-        kernel_params[param_index] *= random.uniform(0.9, 1.1)
-    return kernel_params
-
-# uniform crossover
-def crossover(parent1, parent2):
-    child = [random.choice(pair) for pair in zip(parent1, parent2)]
-    return child
-
-def tournament_selection(population, scores, tournament_size):
-    tournament = random.sample(list(zip(population, scores)), tournament_size)
-    tournament.sort(key=lambda x: x[1])  
-    return tournament[0][0]  
+import numpy as np
 
 
-def genetic_algorithm(x_train, y_train, x_test, y_test, population_size, n_generations, mutation_rate, tournament_size):
-    population = initialize_population(population_size)
-    best_score = float('inf')
-    best_params = None
-    
-    for _ in range(n_generations):
-        scores = [evaluate_model(ind, x_train, y_train, x_test, y_test) for ind in population]
-        best_current = min(scores)
-        if best_current < best_score:
-            best_score = best_current
-            best_params = population[scores.index(best_current)]
-        
-        new_population = []
-        for _ in range(population_size // 2):
-            parent1 = tournament_selection(population, scores, tournament_size)
-            parent2 = tournament_selection(population, scores, tournament_size)
-            while np.array_equal(parent1, parent2):
-                parent2 = tournament_selection(population, scores, tournament_size)
-            child1 = mutate(crossover(parent1, parent2), mutation_rate)
-            child2 = mutate(crossover(parent1, parent2), mutation_rate)
-            new_population.extend([child1, child2])
-        population = new_population
-        # choose best individuals to new population (takes too long)
-        # new_scores = [evaluate_model(ind, x_train, y_train, x_test, y_test) for ind in new_population]
-        # combined_population = population + new_population
-        # combined_scores = scores + new_scores
-        # sorted_indices = sorted(range(len(combined_scores)), key=lambda idx: combined_scores[idx])
-        # population = [combined_population[idx] for idx in sorted_indices[:population_size]]
-    return best_params, best_score
+class SEA:
+    def __init__(self, fun, bounds, maximize, population_size, n_generations, mutation_rate, tournament_size):
+        self.fun = fun
+        self.bounds = bounds
+        self.maximize = maximize
+        self.population_size = population_size
+        self.n_generations = n_generations
+        self.mutation_rate = mutation_rate
+        self.tournament_size = tournament_size
 
+    def _initialize_population(self):
+        return [[np.random.uniform(*param_bounds) for param_bounds in self.bounds] for _ in range(self.population_size)]
 
-df, x_train, x_test, y_train, y_test, mean, std = load_data(os.path.join(os.path.dirname(__file__),'../data/CSCO_data.csv'),'Close')
-population_size = 10
-n_generations = 10
-mutation_rate = 0.05
-tournament_size = 3
-best_params, best_score = genetic_algorithm(x_train, y_train, x_test, y_test, population_size, n_generations, mutation_rate, tournament_size)
-print("Najlepsze parametry:", best_params)
-print("Najmniejszy MSE:", best_score)
+    def _tournament_selection(self, population, scores):
+        tournament = random.sample(list(zip(population, scores)), self.tournament_size)
+        tournament.sort(key=lambda x: x[1])
+        return tournament[0][0]
 
+    def _crossover(self, parent1, parent2):
+        child = [random.choice(pair) for pair in zip(parent1, parent2)]
+        return child
+
+    def _mutate(self, child):
+        if random.random() < self.mutation_rate:
+            index = random.randint(0, len(child) - 1)
+            child[index] *= random.uniform(0.9, 1.1)
+        return child
+
+    def optimize(self):
+        population = self._initialize_population()
+        if not self.maximize:
+            best_score = float('inf')
+        else:
+            best_score = float('-inf')
+        best_params = None
+
+        for _ in range(self.n_generations):
+            scores = [self.fun(individual) for individual in population]
+            if not self.maximize:
+                best_current = min(scores)
+                if best_current < best_score:
+                    best_score = best_current
+                    best_params = population[scores.index(best_current)]
+            else:
+                best_current = max(scores)
+                if best_current > best_score:
+                    best_score = best_current
+                    best_params = population[scores.index(best_current)]
+
+            new_population = []
+            for _ in range(self.population_size // 2):
+                parent1 = self._tournament_selection(population, scores)
+                parent2 = self._tournament_selection(population, scores)
+                while np.array_equal(parent1, parent2):
+                    parent2 = self._tournament_selection(population, scores)
+
+                child1 = self._mutate(self._crossover(parent1, parent2))
+                child2 = self._mutate(self._crossover(parent1, parent2))
+                new_population.extend([child1, child2])
+
+            population = new_population
+
+        return best_params
