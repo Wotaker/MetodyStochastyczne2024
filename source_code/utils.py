@@ -95,6 +95,7 @@ def parse_parameters(gpr: GaussianProcessRegressor) -> List[Tuple]:
 
     return kernel_parameters
 
+
 def set_parameters(gpr: GaussianProcessRegressor, kernel_parameters: List[Tuple], fixed: bool = True) -> GaussianProcessRegressor:
     """
     Sets the kernel parameters of a GaussianProcessRegressor object.
