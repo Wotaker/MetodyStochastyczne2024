@@ -10,11 +10,10 @@ import pandas as pd
 import time
 from sklearn.gaussian_process.kernels import *
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
+
+from sklearn.metrics import mean_squared_error, r2_score
 
 from hms.optimization import hms_optimization
-# from hms.optimization_JB import hms_optimization
 from load.optimization import mock_optimization
 from sea.optimization import sea_optimization
 from utils import *
@@ -22,15 +21,16 @@ from plotting import *
 
 
 def predict(
-        gpr: GaussianProcessRegressor,
-        df: pd.DataFrame,
-        x_train: np.ndarray,
-        y_train: np.ndarray,
-        x_test: np.ndarray,
-        y_test: np.ndarray,
-        results_dir: str,
-        verbose: bool = False
+    gpr: GaussianProcessRegressor,
+    df: pd.DataFrame,
+    x_train: np.ndarray,
+    y_train: np.ndarray,
+    x_test: np.ndarray,
+    y_test: np.ndarray,
+    results_dir: str,
+    verbose: bool = False
 ) -> Tuple:
+    
     # Predict
     x = np.concatenate([x_train, x_test])
     y_mean, y_std = gpr.predict(x, return_std=True)
@@ -43,8 +43,8 @@ def predict(
     df['time'] = df.index
     df['y_mean'] = y_mean
     df['y_std'] = y_std
-    df['y_lwr'] = df['y_mean'] - 2 * df['y_std']
-    df['y_upr'] = df['y_mean'] + 2 * df['y_std']
+    df['y_lwr'] = df['y_mean'] - 2*df['y_std']
+    df['y_upr'] = df['y_mean'] + 2*df['y_std']
 
     # Plot the predictions
     plot_predictions(
@@ -53,7 +53,7 @@ def predict(
         r2_score_test=r2_score_test,
         results_dir=results_dir,
         verbose=verbose
-    )
+    )    
 
     # Plot the errors
     plot_errors(
@@ -63,19 +63,20 @@ def predict(
         results_dir=results_dir,
         verbose=verbose
     )
-
+    
     return df, r2_score_train, r2_score_test
 
 
 def gpr(
-        data_path: str,
-        column: str,
-        split: float,
-        kernel_path: str,
-        optimizer: str,
-        results_dir: str,
-        verbose: bool = False
+    data_path: str,
+    column: str,
+    split: float,
+    kernel_path: str,
+    optimizer: str,
+    results_dir: str,
+    verbose: bool = False
 ):
+
     # Load data
     df, x_train, x_test, y_train, y_test, mean, std = load_data(
         data_path=data_path,
@@ -113,10 +114,8 @@ def gpr(
     start_time = time.time()
     if optimizer == "sklearn":
         gpr.fit(x_train, y_train)
-    # elif optimizer == "hms":
-    #     gpr = hms_optimization(gpr, x_train, y_train)
     elif optimizer == "hms":
-        gpr = hms_optimization(x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
+        gpr = hms_optimization(gpr, x_train, y_train, r2_score)
     elif optimizer == "sea":
         gpr = sea_optimization(x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
     elif optimizer == "fixed":
@@ -128,10 +127,10 @@ def gpr(
 
     # Save the fitted kernel
     with open(os.path.join(results_dir, 'kernel_fitted.py'), 'w') as f:
-        fixed_kernel = fix_kernel(gpr.kernel_)
+        fixed_kernel = fix_kernel(gpr.kernel)
         f.write(f"from sklearn.gaussian_process.kernels import *\n\n")
         f.write(f"kernel = {fixed_kernel.__repr__()}")
-
+    
     # Plot samples from posterior
     if verbose:
         plot_samples(
@@ -160,6 +159,7 @@ def gpr(
 
 
 if __name__ == '__main__':
+
     # Parse command line arguments
     parser = ArgumentParser()
     parser.add_argument("-k", "--kernel_path", type=str, required=True,
