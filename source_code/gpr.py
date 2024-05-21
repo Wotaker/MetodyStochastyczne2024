@@ -11,8 +11,11 @@ import time
 from sklearn.gaussian_process.kernels import *
 from sklearn.gaussian_process import GaussianProcessRegressor
 
+from sklearn.metrics import mean_squared_error, r2_score
+
 from hms.optimization import hms_optimization
 from load.optimization import mock_optimization
+from sea.optimization import sea_optimization
 from utils import *
 from plotting import *
 
@@ -63,6 +66,7 @@ def predict(
     
     return df, r2_score_train, r2_score_test
 
+
 def gpr(
     data_path: str,
     column: str,
@@ -86,8 +90,8 @@ def gpr(
 
     # Define GaussianProcessRegressor object. 
     gpr = GaussianProcessRegressor(
-        kernel=kernel, 
-        n_restarts_optimizer=10, 
+        kernel=kernel,
+        n_restarts_optimizer=10,
         normalize_y=True,
         alpha=0.0,
     )
@@ -111,7 +115,9 @@ def gpr(
     if optimizer == "sklearn":
         gpr.fit(x_train, y_train)
     elif optimizer == "hms":
-        gpr = hms_optimization(gpr, x_train, y_train)
+        gpr = hms_optimization(gpr, x_train, y_train, r2_score, maximize_metric=True)
+    elif optimizer == "sea":
+        gpr = sea_optimization(gpr, x_train, y_train, mean_squared_error, maximize_metric=False)
     elif optimizer == "fixed":
         gpr.kernel = fix_kernel(gpr.kernel)
         gpr.fit(x_train, y_train)
@@ -162,7 +168,8 @@ if __name__ == '__main__':
                         help="Path to the data file time series")
     parser.add_argument("--split", type=float, default=0.8,
                         help="Train-test split ratio")
-    parser.add_argument("-o", "--optimizer", type=str, default="sklearn", choices=["sklearn", "hms", "fixed", "mock"],
+    parser.add_argument("-o", "--optimizer", type=str, default="sklearn",
+                        choices=["sklearn", "hms", "sea", "fixed", "mock"],
                         help="Optimization method to use for the kernel hyperparameters optimization")
     parser.add_argument("--column", type=str, default="Close",
                         help="Dataframe column to use for the time series prediction")

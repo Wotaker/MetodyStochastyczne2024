@@ -18,5 +18,5 @@ pip install -e .
 
 ### Run the example
 ```bash
-python source_code/gpr.py -k kernels/sample_kernel.py -d data/co2_clean.csv --column CO2 -v 
+python source_code/gpr.py -k kernels/sample_kernel.py -d data/co2_clean.csv --column CO2 -o hms -v 
 ```
