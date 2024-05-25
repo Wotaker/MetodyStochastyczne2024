@@ -73,6 +73,7 @@ def gpr(
     split: float,
     kernel_path: str,
     optimizer: str,
+    fitness_fun: str,
     results_dir: str,
     verbose: bool = False
 ):
@@ -115,9 +116,9 @@ def gpr(
     if optimizer == "sklearn":
         gpr.fit(x_train, y_train)
     elif optimizer == "hms":
-        gpr = hms_optimization(gpr, x_train, y_train, r2_score, maximize_metric=True)
+        gpr = hms_optimization(gpr, x_train, y_train, FITNESS_MAPPING[fitness_fun][0], FITNESS_MAPPING[fitness_fun][0])
     elif optimizer == "sea":
-        gpr = sea_optimization(gpr, x_train, y_train, mean_squared_error, maximize_metric=False)
+        gpr = sea_optimization(gpr, x_train, y_train, FITNESS_MAPPING[fitness_fun][0], FITNESS_MAPPING[fitness_fun][0], verbose)
     elif optimizer == "fixed":
         gpr.kernel = fix_kernel(gpr.kernel)
         gpr.fit(x_train, y_train)
@@ -171,6 +172,9 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--optimizer", type=str, default="sklearn",
                         choices=["sklearn", "hms", "sea", "fixed", "mock"],
                         help="Optimization method to use for the kernel hyperparameters optimization")
+    parser.add_argument("-f", "--fitness_fun", type=str, default="r2",
+                        choices=["r2", "mse"],
+                        help="Fitness function to use for the optimization")
     parser.add_argument("--column", type=str, default="Close",
                         help="Dataframe column to use for the time series prediction")
     parser.add_argument("-r", "--results_dir", type=str, default="results",

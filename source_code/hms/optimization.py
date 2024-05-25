@@ -13,14 +13,14 @@ def hms_optimization(
     x_train: np.ndarray,
     y_train: np.ndarray,
     metric_fn: Callable,
-    maximize_metric
+    maximize: bool
 ):
 
-    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, metric_fn, maximize_metric)
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, metric_fn, maximize)
 
     problem = FunctionProblem(gpr_evaluation.evaluate_model,
                               bounds=gpr_evaluation.get_bounds(),
-                              maximize=gpr_evaluation.maximize_metric)
+                              maximize=gpr_evaluation.maximize)
     config = [
         EALevelConfig(ea_class=SEA, generations=2, problem=problem, pop_size=20, mutation_std=1.0, lsc=DontStop()),
         EALevelConfig(ea_class=SEA, generations=4, problem=problem, pop_size=10, mutation_std=0.25,

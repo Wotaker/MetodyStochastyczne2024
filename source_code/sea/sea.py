@@ -1,9 +1,22 @@
+from typing import List, Callable
+
 import random
 import numpy as np
+from tqdm import tqdm
 
 
 class SEA:
-    def __init__(self, fun, bounds, maximize, population_size, n_generations, mutation_rate, tournament_size):
+    def __init__(
+            self,
+            fun: Callable,
+            bounds: List,
+            maximize: bool,
+            population_size: int,
+            n_generations: int,
+            mutation_rate: float,
+            tournament_size: int,
+            verbose: bool = False
+        ):
         self.fun = fun
         self.bounds = bounds
         self.maximize = maximize
@@ -11,6 +24,7 @@ class SEA:
         self.n_generations = n_generations
         self.mutation_rate = mutation_rate
         self.tournament_size = tournament_size
+        self.verbose = verbose
 
     def _initialize_population(self):
         return [[np.random.uniform(*param_bounds) for param_bounds in self.bounds] for _ in range(self.population_size)]
@@ -38,7 +52,7 @@ class SEA:
             best_score = float('-inf')
         best_params = None
 
-        for _ in range(self.n_generations):
+        for _ in tqdm(range(self.n_generations), disable=not self.verbose):
             scores = [self.fun(individual) for individual in population]
             if not self.maximize:
                 best_current = min(scores)

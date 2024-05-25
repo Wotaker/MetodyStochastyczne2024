@@ -8,6 +8,13 @@ import importlib.util
 from datetime import datetime
 from sklearn.gaussian_process.kernels import Kernel
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+
+
+FITNESS_MAPPING = {
+    "mse": (mean_squared_error, False),
+    "r2": (r2_score, True)
+}
 
 
 def create_experiment_dir(dir_path: str, kernel_path: str) -> str:
@@ -27,14 +34,22 @@ def create_experiment_dir(dir_path: str, kernel_path: str) -> str:
     return dir_path
 
 
-def train_test_split(x, y, train_size: float):
+def train_test_split(x, y, train_size: float, random_choice: bool = False) -> Tuple:
     n = len(x)
     n_train = int(n * train_size)
-
-    x_train = x[:n_train]
-    x_test = x[n_train:]
-    y_train = y[:n_train]
-    y_test = y[n_train:]
+    
+    if random_choice:
+        indices = np.random.choice(n, n_train, replace=False)
+        x_train = x[indices]
+        x_test = np.delete(x, indices, axis=0)
+        y_train = y[indices]
+        y_test = np.delete(y, indices, axis=0)
+    else:
+        x_train = x[:n_train]
+        x_test = x[n_train:]
+        y_train = y[:n_train]
+        y_test = y[n_train:]
+    
     return x_train, x_test, y_train, y_test
 
 

@@ -1,5 +1,6 @@
 from typing import Callable
 
+import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
 from gpr_evaluation import GPREvaluation
@@ -12,17 +13,21 @@ def sea_optimization(
     x_train: np.ndarray,
     y_train: np.ndarray,
     metric_fn: Callable,
-    maximize_metric
+    maximize: bool,
+    verbose: bool
 ):
-    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, metric_fn, maximize_metric)
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, metric_fn, maximize)
 
-    sea = SEA(gpr_evaluation.evaluate_model,
-              gpr_evaluation.get_bounds(),
-              maximize_metric,
-              population_size=25,
-              n_generations=25,
-              mutation_rate=1,
-              tournament_size=3)
+    sea = SEA(
+        gpr_evaluation.evaluate_model,
+        gpr_evaluation.get_bounds(),
+        gpr_evaluation.maximize,
+        population_size=25,
+        n_generations=25,
+        mutation_rate=1,
+        tournament_size=3,
+        verbose=verbose
+    )
 
     optimized_params = sea.optimize()
 

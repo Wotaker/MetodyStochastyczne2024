@@ -6,12 +6,12 @@ import numpy as np
 
 
 class GPREvaluation:
-    def __init__(self, gpr: GaussianProcessRegressor, x_train, y_train, train_size: float, metric_fn: Callable, maximize_metric: bool):
+    def __init__(self, gpr: GaussianProcessRegressor, x_train, y_train, train_size: float, metric_fn: Callable, maximize: bool):
         self.gpr = gpr
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(x_train, y_train, train_size)
+        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(x_train, y_train, train_size, True)
         self.metric_fn = metric_fn
         self.params = parse_parameters(gpr)
-        self.maximize_metric = maximize_metric
+        self.maximize = maximize
 
         self.gpr.kernel = fix_kernel(self.gpr.kernel)
 
