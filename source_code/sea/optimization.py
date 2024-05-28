@@ -16,7 +16,7 @@ def sea_optimization(
     maximize: bool,
     verbose: bool
 ):
-    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, metric_fn, maximize)
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn, maximize)
 
     sea = SEA(
         gpr_evaluation.evaluate_model,

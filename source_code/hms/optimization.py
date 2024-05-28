@@ -15,7 +15,7 @@ def hms_optimization(
     maximize: bool
 ):
 
-    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, metric_fn, maximize)
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn, maximize)
 
     problem = FunctionProblem(gpr_evaluation.evaluate_model,
                               bounds=gpr_evaluation.get_bounds(),

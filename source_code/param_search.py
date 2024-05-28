@@ -1,5 +1,3 @@
-from sklearn.metrics import mean_squared_error, r2_score
-
 from sea.sea import SEA
 from optimizer_utils.gpr_evaluation import GPREvaluation
 from optimizer_utils.grid_search import GridSearch
@@ -18,7 +16,7 @@ def param_search(
         data_path=data_path,
         column=column,
         split=split,
-        verbose=verbose
+        verbose=False
     )
 
     kernel = get_kernel(kernel_path=kernel_path)
@@ -32,20 +30,22 @@ def param_search(
 
     param_grid = {
         'population_size': [25],
-        'mutation_rate': [0.25, 1],
+        'mutation_rate': [1],
         'tournament_size': [3],
-        'n_generations': [25]
+        'n_generations': [5, 10]
     }
 
     if optimizer == "sea":
-        gpr_evaluation = GPREvaluation(gpr, x_train, y_train, 0.8, mean_squared_error, maximize_metric=False)
+        gpr_evaluation = GPREvaluation(gpr, x_train, y_train, mean_squared_error, maximize=False)
         sea = SEA(gpr_evaluation.evaluate_model,
                   gpr_evaluation.get_bounds(),
-                  gpr_evaluation.maximize_metric,
+                  gpr_evaluation.maximize,
+                  verbose=verbose
                   )
-        grid_search = GridSearch(sea, param_grid, 1, True)
+        grid_search = GridSearch(sea, param_grid, verbose)
         grid_search.fit()
         print(grid_search.scores)
 
+
 if __name__ == '__main__':
-    param_search("../data/co2_clean.csv", "CO2", 0.8, "../kernels/sample_kernel.py", "sea")
+    param_search("../data/co2_clean.csv", "CO2", 0.8, "../kernels/sample_kernel.py", "sea", verbose=True)

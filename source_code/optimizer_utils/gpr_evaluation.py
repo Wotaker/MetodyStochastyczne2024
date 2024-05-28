@@ -1,14 +1,15 @@
 from typing import Callable
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from utils import parse_parameters, fix_kernel, train_test_split
+from utils import parse_parameters, fix_kernel
 import numpy as np
 
 
 class GPREvaluation:
-    def __init__(self, gpr: GaussianProcessRegressor, x_train, y_train, train_size: float, metric_fn: Callable, maximize: bool):
+    def __init__(self, gpr: GaussianProcessRegressor, x_train, y_train, metric_fn: Callable, maximize: bool):
         self.gpr = gpr
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(x_train, y_train, train_size, True)
+        self.x_train = x_train
+        self.y_train = y_train
         self.metric_fn = metric_fn
         self.params = parse_parameters(gpr)
         self.maximize = maximize
@@ -28,7 +29,7 @@ class GPREvaluation:
         self.set_params(params)
 
         self.gpr.fit(self.x_train, self.y_train)
-        y_pred = self.gpr.predict(self.x_test)
-        metric = self.metric_fn(self.y_test, y_pred)
+        y_pred = self.gpr.predict(self.x_train)
+        metric = self.metric_fn(self.y_train, y_pred)
 
         return metric

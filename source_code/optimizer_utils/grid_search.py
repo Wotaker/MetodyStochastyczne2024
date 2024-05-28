@@ -1,5 +1,6 @@
 from typing import Iterable, Any
 from itertools import product
+import numpy as np
 
 
 def _grid_parameters(param_grid: dict[str, Iterable[Any]]) -> Iterable[dict[str, Any]]:
@@ -8,11 +9,11 @@ def _grid_parameters(param_grid: dict[str, Iterable[Any]]) -> Iterable[dict[str,
 
 
 class GridSearch:
-    def __init__(self, optimizer, param_grid: dict, validation_count, verbose=False):
+    def __init__(self, optimizer, param_grid: dict, verbose=False):
         self.optimizer = optimizer
         self.param_grid = param_grid
-        self.validation_count = validation_count
 
+        self.iterations = np.prod([len(v) for v in self.param_grid.values()])
         self.verbose = verbose
 
         self.scores = []
@@ -20,7 +21,7 @@ class GridSearch:
     def fit(self):
         for i, settings in enumerate(_grid_parameters(self.param_grid)):
             if self.verbose:
-                print("Round:", i)
+                print(f"\nIteration: {i+1}/{self.iterations}")
             self.optimizer.set_params(settings)
             _, score = self.optimizer.optimize()
             s = (settings, score)
