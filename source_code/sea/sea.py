@@ -3,7 +3,15 @@ import numpy as np
 
 
 class SEA:
-    def __init__(self, fun, bounds, maximize, population_size, n_generations, mutation_rate, tournament_size):
+    def __init__(self,
+                 fun,
+                 bounds,
+                 maximize,
+                 population_size=None,
+                 n_generations=None,
+                 mutation_rate=None,
+                 tournament_size=None
+    ):
         self.fun = fun
         self.bounds = bounds
         self.maximize = maximize
@@ -11,6 +19,12 @@ class SEA:
         self.n_generations = n_generations
         self.mutation_rate = mutation_rate
         self.tournament_size = tournament_size
+
+    def set_params(self, params: dict):
+        for k, v in params.items():
+            if not hasattr(self, k):
+                raise AttributeError(f"Attribute: {k} does not exist")
+            setattr(self, k, v)
 
     def _initialize_population(self):
         return [[np.random.uniform(*param_bounds) for param_bounds in self.bounds] for _ in range(self.population_size)]
@@ -64,4 +78,4 @@ class SEA:
 
             population = new_population
 
-        return best_params
+        return best_params, best_score

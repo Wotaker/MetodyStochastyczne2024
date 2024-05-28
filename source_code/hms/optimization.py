@@ -1,9 +1,8 @@
 from typing import Callable
 
-import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
-from gpr_evaluation import GPREvaluation
+from optimizer_utils.gpr_evaluation import GPREvaluation
 
 from pyhms import hms, EALevelConfig, FunctionProblem, DontStop, MetaepochLimit, SEA, get_NBC_sprout
 
@@ -22,8 +21,8 @@ def hms_optimization(
                               bounds=gpr_evaluation.get_bounds(),
                               maximize=gpr_evaluation.maximize_metric)
     config = [
-        EALevelConfig(ea_class=SEA, generations=2, problem=problem, pop_size=20, mutation_std=1.0, lsc=DontStop()),
-        EALevelConfig(ea_class=SEA, generations=4, problem=problem, pop_size=10, mutation_std=0.25,
+        EALevelConfig(ea_class=SEA, generations=2, problem=problem, pop_size=20, mutation_std=0.01, lsc=DontStop()),
+        EALevelConfig(ea_class=SEA, generations=4, problem=problem, pop_size=10, mutation_std=0.005,
                       sample_std_dev=1.0, lsc=DontStop()),
     ]
     global_stop_condition = MetaepochLimit(limit=10)
