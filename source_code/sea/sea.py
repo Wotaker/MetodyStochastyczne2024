@@ -11,10 +11,10 @@ class SEA:
             fun: Callable,
             bounds: List,
             maximize: bool,
-            population_size: int,
-            n_generations: int,
-            mutation_rate: float,
-            tournament_size: int,
+            population_size: int = None,
+            n_generations: int = None,
+            mutation_rate: float = None,
+            tournament_size: int = None,
             verbose: bool = False
         ):
         self.fun = fun
@@ -25,6 +25,12 @@ class SEA:
         self.mutation_rate = mutation_rate
         self.tournament_size = tournament_size
         self.verbose = verbose
+
+    def set_params(self, params: dict):
+        for k, v in params.items():
+            if not hasattr(self, k):
+                raise AttributeError(f"Attribute: {k} does not exist")
+            setattr(self, k, v)
 
     def _initialize_population(self):
         return [[np.random.uniform(*param_bounds) for param_bounds in self.bounds] for _ in range(self.population_size)]
@@ -78,4 +84,4 @@ class SEA:
 
             population = new_population
 
-        return best_params
+        return best_params, best_score

@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
-from gpr_evaluation import GPREvaluation
+from optimizer_utils.gpr_evaluation import GPREvaluation
 
 from .sea import SEA
 
@@ -29,7 +29,7 @@ def sea_optimization(
         verbose=verbose
     )
 
-    optimized_params = sea.optimize()
+    optimized_params, _ = sea.optimize()
 
     gpr_evaluation.set_params(optimized_params)
 
