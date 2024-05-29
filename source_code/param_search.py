@@ -29,10 +29,10 @@ def param_search(
     )
 
     param_grid = {
-        'population_size': [25],
-        'mutation_rate': [1],
-        'tournament_size': [3],
-        'n_generations': [5, 10]
+        'population_size': [25, 50, 100],
+        'mutation_rate': [0.1, 0.25, 0.5],
+        'tournament_size': [3, 5, 7],
+        'n_generations': [5, 10, 20]
     }
 
     if optimizer == "sea":

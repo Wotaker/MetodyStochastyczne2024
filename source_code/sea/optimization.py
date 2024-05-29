@@ -22,9 +22,9 @@ def sea_optimization(
         gpr_evaluation.evaluate_model,
         gpr_evaluation.get_bounds(),
         gpr_evaluation.maximize,
-        population_size=25,
-        n_generations=25,
-        mutation_rate=1,
+        population_size=100,
+        n_generations=20,
+        mutation_rate=0.1,
         tournament_size=3,
         verbose=verbose
     )

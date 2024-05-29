@@ -41,13 +41,21 @@ class SEA:
         return tournament[0][0]
 
     def _crossover(self, parent1, parent2):
-        child = [random.choice(pair) for pair in zip(parent1, parent2)]
+        weight = random.random()
+        child = [
+            weight * gene1 + (1 - weight) * gene2
+            for gene1, gene2 in zip(parent1, parent2)
+        ]
         return child
 
     def _mutate(self, child):
-        if random.random() < self.mutation_rate:
-            index = random.randint(0, len(child) - 1)
-            child[index] *= random.uniform(0.9, 1.1)
+        for i in range(len(child)):
+            if random.random() < self.mutation_rate:
+                param_bounds = self.bounds[i]
+                mutation_range = (param_bounds[1] - param_bounds[0])/100
+                mutation = random.uniform(-mutation_range, mutation_range)
+                child[i] += mutation
+                child[i] = max(param_bounds[0], min(child[i], param_bounds[1]))
         return child
 
     def optimize(self):
