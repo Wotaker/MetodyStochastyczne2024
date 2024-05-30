@@ -172,7 +172,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--optimizer", type=str, default="sklearn",
                         choices=["sklearn", "hms", "sea", "fixed", "mock"],
                         help="Optimization method to use for the kernel hyperparameters optimization")
-    parser.add_argument("-f", "--fitness_fun", type=str, default="r2",
+    parser.add_argument("-f", "--fitness_fun", type=str, default="mse",
                         choices=["r2", "mse"],
                         help="Fitness function to use for the optimization")
     parser.add_argument("--column", type=str, default="Close",
