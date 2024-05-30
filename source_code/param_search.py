@@ -10,6 +10,7 @@ def param_search(
         split: float,
         kernel_path: str,
         optimizer: str,
+        metrics: str,
         verbose: bool = False
 ):
     df, x_train, x_test, y_train, y_test, mean, std = load_data(
@@ -29,23 +30,25 @@ def param_search(
     )
 
     param_grid = {
-        'population_size': [25, 50, 100],
-        'mutation_rate': [0.1, 0.25, 0.5],
-        'tournament_size': [3, 5, 7],
-        'n_generations': [5, 10, 20]
+        'population_size': [10, 20],
+        'mutation_rate': [0.1, 0.5, 1],
+        'tournament_size': [3],
+        'n_generations': [5],
     }
 
+    iterations = 3
+
     if optimizer == "sea":
-        gpr_evaluation = GPREvaluation(gpr, x_train, y_train, mean_squared_error, maximize=False)
+        gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metrics)
         sea = SEA(gpr_evaluation.evaluate_model,
                   gpr_evaluation.get_bounds(),
                   gpr_evaluation.maximize,
                   verbose=verbose
                   )
-        grid_search = GridSearch(sea, param_grid, verbose)
+        grid_search = GridSearch(sea, gpr_evaluation, param_grid, iterations, verbose)
         grid_search.fit()
-        print(grid_search.scores)
 
 
+# Change "mse" to "r2" id you want to switch metric. The evaluation and params comparison should be adjusted accordingly
 if __name__ == '__main__':
-    param_search("../data/co2_clean.csv", "CO2", 0.8, "../kernels/sample_kernel.py", "sea", verbose=True)
+    param_search("./data/co2_clean.csv", "CO2", 0.8, "./kernels/sample_kernel.py", "sea", "r2", verbose=True)

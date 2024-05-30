@@ -4,6 +4,8 @@ import random
 import numpy as np
 from tqdm import tqdm
 
+import numpy as np
+
 
 class SEA:
     def __init__(
@@ -15,8 +17,10 @@ class SEA:
             n_generations: int = None,
             mutation_rate: float = None,
             tournament_size: int = None,
-            verbose: bool = False
-        ):
+            verbose: bool = False,
+            start_std_factor: float = 0.01,
+            stop_std_factor: float = 0.001
+    ):
         self.fun = fun
         self.bounds = bounds
         self.maximize = maximize
@@ -25,6 +29,10 @@ class SEA:
         self.mutation_rate = mutation_rate
         self.tournament_size = tournament_size
         self.verbose = verbose
+        self.start_std_factor = start_std_factor
+        self.stop_std_factor = stop_std_factor
+        self.current_generation = 0
+        self.std_devs = [np.std(bound) for bound in self.bounds]
 
     def set_params(self, params: dict):
         for k, v in params.items():
@@ -52,7 +60,12 @@ class SEA:
         for i in range(len(child)):
             if random.random() < self.mutation_rate:
                 param_bounds = self.bounds[i]
-                mutation_range = (param_bounds[1] - param_bounds[0])/100
+                std_dev = self.std_devs[i]
+
+                mutation_range = ((self.stop_std_factor - self.start_std_factor) / np.log(self.n_generations)) * np.log(
+                    self.current_generation + 1) + self.start_std_factor
+                mutation_range *= std_dev
+
                 mutation = random.uniform(-mutation_range, mutation_range)
                 child[i] += mutation
                 child[i] = max(param_bounds[0], min(child[i], param_bounds[1]))
@@ -91,5 +104,6 @@ class SEA:
                 new_population.extend([child1, child2])
 
             population = new_population
+            self.current_generation += 1
 
         return best_params, best_score

@@ -9,12 +9,12 @@ from .sea import SEA
 
 
 def sea_optimization(
-    gpr: GaussianProcessRegressor,
-    x_train: np.ndarray,
-    y_train: np.ndarray,
-    metric_fn: Callable,
-    maximize: bool,
-    verbose: bool
+        gpr: GaussianProcessRegressor,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        metric_fn: Callable,
+        maximize: bool,
+        verbose: bool
 ):
     gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn, maximize)
 
@@ -22,9 +22,9 @@ def sea_optimization(
         gpr_evaluation.evaluate_model,
         gpr_evaluation.get_bounds(),
         gpr_evaluation.maximize,
-        population_size=100,
-        n_generations=20,
-        mutation_rate=0.1,
+        population_size=25,
+        n_generations=50,
+        mutation_rate=1,
         tournament_size=3,
         verbose=verbose
     )
