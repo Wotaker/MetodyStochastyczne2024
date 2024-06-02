@@ -8,14 +8,12 @@ from pyhms import hms, EALevelConfig, FunctionProblem, DontStop, MetaepochLimit,
 
 
 def hms_optimization(
-    gpr: GaussianProcessRegressor,
-    x_train: np.ndarray,
-    y_train: np.ndarray,
-    metric_fn: Callable,
-    maximize: bool
+        gpr: GaussianProcessRegressor,
+        x_train: np.ndarray,
+        y_train: np.ndarray,
+        metric_fn: str,
 ):
-
-    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn, maximize)
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn)
 
     problem = FunctionProblem(gpr_evaluation.evaluate_model,
                               bounds=gpr_evaluation.get_bounds(),
@@ -35,6 +33,3 @@ def hms_optimization(
     gpr_evaluation.set_params(optimized_params)
 
     return gpr_evaluation.gpr
-
-
-

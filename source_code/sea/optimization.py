@@ -12,11 +12,10 @@ def sea_optimization(
         gpr: GaussianProcessRegressor,
         x_train: np.ndarray,
         y_train: np.ndarray,
-        metric_fn: Callable,
-        maximize: bool,
+        metric_fn: str,
         verbose: bool
 ):
-    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn, maximize)
+    gpr_evaluation = GPREvaluation(gpr, x_train, y_train, metric_fn)
 
     sea = SEA(
         gpr_evaluation.evaluate_model,
