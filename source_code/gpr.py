@@ -155,8 +155,8 @@ def gpr(
         results_dir=results_dir,
         verbose=verbose
     )
-    print(f"[info] Train R2 score: {r2_score_train:.3f}")
-    print(f"[info] Test R2 score:  {r2_score_test:.3f}")
+    print(f"[info] Train R2 score: {r2_score_train:.5f}")
+    print(f"[info] Test R2 score:  {r2_score_test:.5f}")
 
 
 if __name__ == '__main__':

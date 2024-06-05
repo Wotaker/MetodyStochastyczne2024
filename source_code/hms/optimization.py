@@ -59,8 +59,8 @@ def hms_optimization(x_train, y_train, x_test, y_test):
     gpr_problem = GPRProblem(x_train, y_train, x_test, y_test, initial_bounds)
 
     config = [
-        EALevelConfig(ea_class=SEA, generations=2, problem=gpr_problem, pop_size=20, mutation_std=1.0, lsc=DontStop()),
-        EALevelConfig(ea_class=SEA, generations=4, problem=gpr_problem, pop_size=10, mutation_std=0.25,
+        EALevelConfig(ea_class=SEA, generations=10, problem=gpr_problem, pop_size=20, mutation_std=0.2, lsc=DontStop()),
+        EALevelConfig(ea_class=SEA, generations=20, problem=gpr_problem, pop_size=10, mutation_std=0.05,
                       sample_std_dev=1.0, lsc=DontStop()),
     ]
     global_stop_condition = MetaepochLimit(limit=10)

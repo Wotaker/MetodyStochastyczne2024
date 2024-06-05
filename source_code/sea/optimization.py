@@ -61,7 +61,7 @@ def tournament_selection(population, scores, tournament_size):
     return tournament[0][0]
 
 
-def sea_optimization(x_train, y_train, x_test, y_test, population_size=25, n_generations=25, mutation_rate=1,
+def sea_optimization(x_train, y_train, x_test, y_test, population_size=100, n_generations=50, mutation_rate=1,
                      tournament_size=3):
     population = initialize_population(population_size)
     best_score = float('inf')
@@ -71,7 +71,6 @@ def sea_optimization(x_train, y_train, x_test, y_test, population_size=25, n_gen
         scores = [evaluate_model(ind, x_train, y_train, x_test, y_test, mean_squared_error) for ind in population]
         best_current = min(scores)
         if best_current < best_score:
-            best_score = best_current
             best_score = best_current
             best_params = population[scores.index(best_current)]
 
