@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import *
 from sklearn.metrics import r2_score
@@ -43,16 +44,61 @@ def initialize_population(population_size):
     return population
 
 
-def mutate(kernel_params, mutation_rate):
-    if random.random() < mutation_rate:
-        param_index = random.randint(0, len(kernel_params) - 1)
-        kernel_params[param_index] *= random.uniform(0.9, 1.1)
+# def mutate(kernel_params, mutation_rate):
+#     if random.random() < mutation_rate:
+#         param_index = random.randint(0, len(kernel_params) - 1)
+#         kernel_params[param_index] *= random.uniform(0.9, 1.1)
+#     return kernel_params
+
+
+# def mutate(kernel_params, mutation_rate):
+#     initial_bounds = [(0.01, 0.25), (1, 500), (1, 1e4), (8, 15)]
+#     std_devs = [np.std(bound) for bound in initial_bounds]
+#     for i in range(len(kernel_params)):
+#         if random.random() < mutation_rate:
+#             kernel_params[i] += random.uniform(-std_devs[i], std_devs[i])
+#             kernel_params[i] = max(initial_bounds[i][0], min(kernel_params[i], initial_bounds[i][1]))
+#     return kernel_params
+
+def mutate(kernel_params, mutation_rate, generation, n_generations, start_f, end_f):
+    initial_bounds = [(0.01, 0.25), (1, 500), (1, 1e4), (8, 15)]
+    std_devs = [np.std(bound) for bound in initial_bounds]
+    mutation_range = ((end_f - start_f) / n_generations) * np.log(
+        generation) + start_f
+    for i in range(len(kernel_params)):
+        std_devs[i] *= mutation_range
+        if random.random() < mutation_rate:
+            kernel_params[i] += random.uniform(-std_devs[i], std_devs[i])
+            kernel_params[i] = max(initial_bounds[i][0], min(kernel_params[i], initial_bounds[i][1]))
     return kernel_params
 
 
+# def crossover(parent1, parent2):
+#     child = [random.choice(pair) for pair in zip(parent1, parent2)]
+#     return child
+
+
+# def crossover(parent1, parent2):
+#     weight = random.random()
+#     child = [
+#         weight * gene1 + (1 - weight) * gene2
+#         for gene1, gene2 in zip(parent1, parent2)
+#     ]
+#     return child
+
+
 def crossover(parent1, parent2):
-    child = [random.choice(pair) for pair in zip(parent1, parent2)]
+    child = [
+        random.choice([gene1, gene2])
+        for gene1, gene2 in zip(parent1, parent2)
+    ]
     return child
+
+
+# def crossover(parent1, parent2):
+#     crossover_point = random.randint(1, len(parent1) - 1)
+#     child = parent1[:crossover_point] + parent2[crossover_point:]
+#     return child
 
 
 def tournament_selection(population, scores, tournament_size):
@@ -61,9 +107,39 @@ def tournament_selection(population, scores, tournament_size):
     return tournament[0][0]
 
 
-def sea_optimization(x_train, y_train, x_test, y_test, population_size=100, n_generations=50, mutation_rate=1,
-                     tournament_size=3):
+# def sea_optimization(x_train, y_train, x_test, y_test, population_size=25, n_generations=25, mutation_rate=1,
+#                      tournament_size=3):
+#     population = initialize_population(population_size)
+#     best_score = float('inf')
+#     best_params = None
+#
+#     for _ in range(n_generations):
+#         scores = [evaluate_model(ind, x_train, y_train, x_test, y_test, mean_squared_error) for ind in population]
+#         best_current = min(scores)
+#         if best_current < best_score:
+#             best_score = best_current
+#             best_params = population[scores.index(best_current)]
+#
+#         new_population = []
+#         for _ in range(population_size // 2):
+#             parent1 = tournament_selection(population, scores, tournament_size)
+#             parent2 = tournament_selection(population, scores, tournament_size)
+#             while np.array_equal(parent1, parent2):
+#                 parent2 = tournament_selection(population, scores, tournament_size)
+#             child1 = mutate(crossover(parent1, parent2), mutation_rate)
+#             child2 = mutate(crossover(parent1, parent2), mutation_rate)
+#             new_population.extend([child1, child2])
+#         population = new_population
+#
+#     optimized_kernel = create_kernel(*best_params)
+#     optimized_gpr = GaussianProcessRegressor(kernel=optimized_kernel, random_state=0)
+#     optimized_gpr.fit(x_train, y_train)
+#     return optimized_gpr
+
+def sea_optimization(x_train, y_train, x_test, y_test, population_size=25, n_generations=25, mutation_rate=0.25,
+                     tournament_size=3, elitism_rate=0.1, start_f=0.5, end_f=0.01):
     population = initialize_population(population_size)
+    generation = 1
     best_score = float('inf')
     best_params = None
 
@@ -74,16 +150,22 @@ def sea_optimization(x_train, y_train, x_test, y_test, population_size=100, n_ge
             best_score = best_current
             best_params = population[scores.index(best_current)]
 
-        new_population = []
-        for _ in range(population_size // 2):
+        elite_count = max(1, int(population_size * elitism_rate))
+        elite_indices = np.argsort(scores)[:elite_count]
+        elites = [population[i] for i in elite_indices]
+
+        new_population = elites[:]
+        while len(new_population) < population_size:
             parent1 = tournament_selection(population, scores, tournament_size)
             parent2 = tournament_selection(population, scores, tournament_size)
             while np.array_equal(parent1, parent2):
                 parent2 = tournament_selection(population, scores, tournament_size)
-            child1 = mutate(crossover(parent1, parent2), mutation_rate)
-            child2 = mutate(crossover(parent1, parent2), mutation_rate)
+            child1 = mutate(crossover(parent1, parent2), mutation_rate, generation, n_generations, start_f, end_f)
+            child2 = mutate(crossover(parent1, parent2), mutation_rate, generation, n_generations, start_f, end_f)
             new_population.extend([child1, child2])
-        population = new_population
+
+        population = new_population[:population_size]
+        generation += 1
 
     optimized_kernel = create_kernel(*best_params)
     optimized_gpr = GaussianProcessRegressor(kernel=optimized_kernel, random_state=0)
